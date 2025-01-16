@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Diagnostics;
-using System.Windows.Controls;
 using System.IO;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DiscordCache
 {
@@ -27,102 +17,138 @@ namespace DiscordCache
             InitializeComponent();
             Start();
         }
-        static bool isPng = false;
 
         static string path;
         static string[] files;
 
+        
         public void Start()
         {
             path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\discord\Cache\Cache_Data";
+            FileEndTextBox.Text = ".png";
             try
             {
                 files = Directory.GetFiles(path);
-
-                foreach (string f in files)
-                {
-                    if (f.Contains(".png"))
-                    {
-                        isPng = true;
-                        break;
-                    }
-                }
+                
                 TextBox_FolderPath.Text = path;
-                Test_Copy.Content = isPng.ToString();
             }
             catch (Exception)
             {
                 MessageBox.Show("Failed to find discord's cache folder!.");
             }
+            MajorityExtension();
         }
 
-        public void ChangeToPNG()
+        // Changes the file extension of all the files
+        // 1 = converts to user chosen extension
+        // 2 = converts to a plain file
+        public void ChangeExtension(int buttonNum)
         {
             path = TextBox_FolderPath.Text;
 
-            if (!isPng)
+            foreach (var f in files)
             {
-                foreach (var f in files)
+                switch (buttonNum)
                 {
-                    File.Move(f.ToString(), f.ToString() + ".png");
-                    isPng = true;
+                    case 1:
+                        File.Move(f.ToString(), f.IndexOf('.') != -1 ? f.Remove(f.IndexOf('.')) + FileEndTextBox.Text : f.ToString() + FileEndTextBox.Text);
+                        break;
+                    case 2:
+                        File.Move(f.ToString(), f.IndexOf('.') != -1 ? f.Remove(f.IndexOf('.')) : f.ToString());
+                        break;
                 }
-                files = Directory.GetFiles(path);
             }
+            files = Directory.GetFiles(path);
+
+            MajorityExtension();
         }
 
-        public void ChangeToFile()
+        private void OpenFolder()
         {
             path = TextBox_FolderPath.Text;
 
-            if (isPng)
-            {
-                foreach (var f in files)
-                {
-                    File.Move(f.ToString(), f.Remove(f.IndexOf('.')));
-                    isPng = false;
-                }
-                files = Directory.GetFiles(path);
-            }
-        }
-
-        private void OpenFolder(string folderPath)
-        {
-            path = TextBox_FolderPath.Text;
-
-            if (Directory.Exists(folderPath))
+            if (Directory.Exists(path))
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
-                    Arguments = folderPath,
+                    Arguments = path,
                     FileName = "explorer.exe"
                 };
                 Process.Start(startInfo);
             }
             else
             {
-                MessageBox.Show(string.Format("{0} Directory does not exist!", folderPath));
+                MessageBox.Show(string.Format("{0} Directory does not exist!", path));
             }
         }
-    
-
-
-        private void Button_File_Click(object sender, RoutedEventArgs e)
+        
+        public void LoadFolder()
         {
+            path = TextBox_FolderPath.Text;
 
-            ChangeToFile();
-            Test_Copy.Content = isPng.ToString();
+            try
+            {
+                files = Directory.GetFiles(path);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Failed to load folder!.");
+            }
+
+            MajorityExtension();
         }
 
-        private void Button_PNG_Click(object sender, RoutedEventArgs e)
+        // Loops through every file extension in the folder and checks what is the most frequent
+        public void MajorityExtension()
         {
-            ChangeToPNG();
-            Test_Copy.Content = isPng.ToString();
+            Dictionary<string, int> test = new Dictionary<string, int>();
+            string ext = "";
+
+            foreach (string filename in files)
+            {
+                ext = filename.Remove(0,filename.LastIndexOf("\\"));
+
+                if(ext.IndexOf(".") == -1)
+                    ext = "None";
+                else
+                    ext = filename.Remove(0,filename.IndexOf("."));
+
+                if (!test.ContainsKey(ext))
+                    test.Add(ext, 1);
+                else
+                    test[ext]++;
+            }
+
+            FileFormatText.Content = "";
+
+            foreach(KeyValuePair<string,int> t in test)
+            {
+
+                FileFormatText.Content += t.Key + " ";
+            }
+        }
+        private void FileEndButton1_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBoxResult messageBoxResult = System.Windows.MessageBox.Show("Are you sure?", "Convert to " + FileEndTextBox.Text, System.Windows.MessageBoxButton.YesNo);
+            if (messageBoxResult == MessageBoxResult.Yes)
+                ChangeExtension(1);
         }
 
-        private void Button_Open_Click(object sender, RoutedEventArgs e)
+        private void FileEndButton2_Click(object sender, RoutedEventArgs e)
         {
-            OpenFolder(path);   
+            MessageBoxResult messageBoxResult = System.Windows.MessageBox.Show("Are you sure?", "Convert to plain files", System.Windows.MessageBoxButton.YesNo);
+            if (messageBoxResult == MessageBoxResult.Yes)
+                ChangeExtension(2);
+        }
+
+        private void FolderOpenButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFolder();        
+        }
+
+        private void LoadFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoadFolder();
         }
     }
 }

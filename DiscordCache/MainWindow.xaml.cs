@@ -51,10 +51,10 @@ namespace DiscordCache
                 switch (buttonNum)
                 {
                     case 1:
-                        File.Move(f.ToString(), f.IndexOf('.') != -1 ? f.Remove(f.IndexOf('.')) + FileEndTextBox.Text : f.ToString() + FileEndTextBox.Text);
+                        File.Move(f.ToString(), f.LastIndexOf('.') != -1 ? f.Remove(f.LastIndexOf('.')) + FileEndTextBox.Text : f.ToString() + FileEndTextBox.Text);
                         break;
                     case 2:
-                        File.Move(f.ToString(), f.IndexOf('.') != -1 ? f.Remove(f.IndexOf('.')) : f.ToString());
+                        File.Move(f.ToString(), f.LastIndexOf('.') != -1 ? f.Remove(f.LastIndexOf('.')) : f.ToString());
                         break;
                 }
             }
@@ -111,7 +111,7 @@ namespace DiscordCache
                 if(ext.IndexOf(".") == -1)
                     ext = "None";
                 else
-                    ext = filename.Remove(0,filename.IndexOf("."));
+                    ext = filename.Remove(0,filename.LastIndexOf("."));
 
                 if (!test.ContainsKey(ext))
                     test.Add(ext, 1);
@@ -119,11 +119,12 @@ namespace DiscordCache
                     test[ext]++;
             }
 
+            var ordered = test.OrderBy(x => x.Value).Reverse();
+
             FileFormatText.Content = "";
 
-            foreach(KeyValuePair<string,int> t in test)
+            foreach (KeyValuePair<string, int> t in ordered)
             {
-
                 FileFormatText.Content += t.Key + " ";
             }
         }
